@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white p-8 rounded shadow max-w-md mx-auto">
+    <h2 class="text-2xl font-bold mb-6 text-orange-600">Cession : {{ asset.name }}</h2>
+    <form action="/assets/dispose/{{ asset.id }}" method="POST" class="space-y-4">
+        <div><label>Date de cession *</label><input type="date" name="disposal_date" value="{{ asset.disposal_date if asset.disposal_date else '' }}" class="border p-2 w-full" required></div>
+        <div><label>Prix de vente (€)</label><input type="number" step="0.01" name="disposal_price" value="{{ asset.disposal_price if asset.disposal_price else '0.00' }}" class="border p-2 w-full"></div>
+        <div class="flex gap-2">
+            <button type="submit" class="bg-orange-600 text-white px-6 py-2 rounded">Valider</button>
+            {% if can_cancel %}
+            <a href="/assets/cancel_disposal/{{ asset.id }}" class="bg-red-600 text-white px-6 py-2 rounded" onclick="return confirm('Annuler la cession ? L\\'immobilisation redeviendra active.')">Annuler la cession</a>
+            {% endif %}
+            <a href="/assets" class="bg-gray-400 text-white px-6 py-2 rounded">Retour</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

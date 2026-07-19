@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white p-8 rounded shadow max-w-2xl mx-auto mt-10">
+    <h2 class="text-2xl font-bold mb-6 text-center">Modifier les infos de la société</h2>
+    <form action="/company/update" method="POST" class="grid grid-cols-2 gap-4">
+        <div class="col-span-2"><label>Nom de la société *</label><input type="text" name="name" value="{{ company.name if company else '' }}" class="border p-2 w-full" required></div>
+        <div><label>SIRET</label><input type="text" name="siret" value="{{ company.siret if company else '' }}" class="border p-2 w-full"></div>
+        <div><label>Forme Juridique</label><input type="text" name="legal_form" value="{{ company.legal_form if company else '' }}" class="border p-2 w-full"></div>
+        <div class="col-span-2"><label>Adresse</label><input type="text" name="address" value="{{ company.address if company else '' }}" class="border p-2 w-full"></div>
+        <div class="col-span-2 mt-4 text-center">
+            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">Valider</button>
+            <a href="/settings" class="bg-gray-400 text-white px-6 py-2 rounded ml-2">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Écritures Comptables ({{ year }})</h1>
+    <form action="/accounting/generate" method="POST"><button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded">Générer écritures</button></form>
+</div>
+<div class="bg-white p-6 rounded shadow overflow-x-auto">
+    <table class="w-full text-sm">
+        <thead><tr class="border-b text-left text-gray-500"><th class="py-2">Date</th><th>Débit</th><th>Crédit</th><th>Libellé</th><th>Montant</th></tr></thead>
+        <tbody>{% for e in entries %}<tr class="border-b"><td class="py-2">{{ e.date }}</td><td>{{ e.account_debit }}</td><td>{{ e.account_credit }}</td><td>{{ e.label }}</td><td>{{ "%.2f"|format(e.amount) }} €</td></tr>{% endfor %}</tbody>
+    </table>
+</div>
+{% endblock %}
