@@ -1,0 +1,9 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=Open Gestimmo
+Comment=Lancer le logiciel de gestion des immobilisations
+Exec=/home/votre_compte/votre_dossier/start_silent.sh
+Icon=utilities-terminal
+Terminal=false
+Type=Application
+Categories=Office;Finance;
