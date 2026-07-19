@@ -7,16 +7,17 @@ Logiciel open source de gestion des immobilisations avec les fonctions de base e
 - gestion des Centre de coût, famille, PCG
 - import/export
 - sauvegarde
+  
 le principal y est !
 
-Cela remplace avantageusement un tableau excel ou une base manuel
+Cela remplace avantageusement un tableau excel ou une base manuelle pour un indépendant ou une TPE
 
 ## Installation
 
 ### Sous Linux
-1. Ouvrez un terminal dans le dossier du projet.
-2. Exécutez le script d'installation : `bash install.sh` (ou créez l'environnement virtuel et installez requirements.txt).
-3. Lancez le logiciel : Pour lancer le logiciel, exécutez 'bash ./run.sh' dans le terminal, ou utilisez le script 'bash start_silent.sh'
+1. Téléchargez le projet et dézippez-le. Ouvrez un terminal dans le dossier du projet.
+2. Exécutez le script d'installation : `bash install.sh`
+3. Lancez le logiciel : positionné dans le dossier, exécutez 'bash ./run.sh' dans le terminal, ou utilisez le script 'bash start_silent.sh'
 
 ### Sous Windows
 1. Double-cliquez sur `install_windows.bat`.
