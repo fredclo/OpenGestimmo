@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Tableau des Amortissements ({{ year }})</h1>
+    <form action="/amortization/calculate" method="POST">
+        <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded">🔄 Recalculer tous les plans</button>
+    </form>
+</div>
+<div class="bg-white p-6 rounded shadow overflow-x-auto">
+    <table class="w-full text-sm">
+        <thead><tr class="border-b text-left text-gray-500"><th class="py-2">ID</th><th>Année</th><th>Dotation Écon.</th><th>Dotation Fisc.</th><th>Dérogatoire</th><th>Cumul Écon.</th></tr></thead>
+        <tbody>{% for e in entries %}<tr class="border-b"><td class="py-2">{{ e.asset_id }}</td><td>{{ e.fiscal_year }}</td><td>{{ "%.2f"|format(e.economic_depreciation) }} €</td><td>{{ "%.2f"|format(e.fiscal_depreciation) }} €</td><td>{{ "%.2f"|format(e.derogatory_depreciation) }} €</td><td>{{ "%.2f"|format(e.cumulative_economic) }} €</td></tr>{% endfor %}</tbody>
+    </table>
+</div>
+{% endblock %}

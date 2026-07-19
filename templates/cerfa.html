@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex justify-between items-center mb-6 no-print">
+    <h1 class="text-3xl font-bold">États CERFA 2054 / 2055 ({{ year }})</h1>
+</div>
+<div class="bg-white p-8 rounded shadow print-area">
+    <h2 class="text-center text-xl font-bold mb-4">TABLEAU N° 2054 : IMMOBILISATIONS</h2>
+    <table class="w-full border-collapse mb-8 text-sm">
+        <thead><tr class="bg-gray-200"><th class="border p-2 text-left">N° Compte</th><th class="border p-2 text-right">Val. Début</th><th class="border p-2 text-right">Augmentations</th><th class="border p-2 text-right">Diminutions</th><th class="border p-2 text-right">Val. Fin</th></tr></thead>
+        <tbody>{% for acct, d in cerfa_data.items() %}<tr><td class="border p-2"><a href="/cerfa/detail/{{ acct }}" class="text-blue-600 font-bold hover:underline">{{ acct }}</a></td><td class="border p-2 text-right">{{ "%.2f"|format(d.val_debut) }}</td><td class="border p-2 text-right">{{ "%.2f"|format(d.augm) }}</td><td class="border p-2 text-right">{{ "%.2f"|format(d.dim) }}</td><td class="border p-2 text-right">{{ "%.2f"|format(d.val_fin) }}</td></tr>{% endfor %}</tbody>
+    </table>
+    <h2 class="text-center text-xl font-bold mb-4">TABLEAU N° 2055 : AMORTISSEMENTS</h2>
+    <table class="w-full border-collapse mb-8 text-sm">
+        <thead><tr class="bg-gray-200"><th class="border p-2 text-left">N° Compte</th><th class="border p-2 text-right">Amort. Début</th><th class="border p-2 text-right">Dotations</th><th class="border p-2 text-right">Reprises</th><th class="border p-2 text-right">Amort. Fin</th></tr></thead>
+        <tbody>{% for acct, d in cerfa_data.items() %}<tr><td class="border p-2"><a href="/cerfa/detail/{{ acct }}" class="text-blue-600 font-bold hover:underline">28{{ acct[1:] }}</a></td><td class="border p-2 text-right">{{ "%.2f"|format(d.amort_debut) }}</td><td class="border p-2 text-right">{{ "%.2f"|format(d.dotation) }}</td><td class="border p-2 text-right">{{ "%.2f"|format(d.reprise) }}</td><td class="border p-2 text-right">{{ "%.2f"|format(d.amort_fin) }}</td></tr>{% endfor %}</tbody>
+    </table>
+    <h2 class="text-center text-xl font-bold mb-4">TABLEAU DES CESSIONS</h2>
+    <table class="w-full border-collapse text-sm">
+        <thead><tr class="bg-gray-200"><th class="border p-2 text-left">N° Compte</th><th class="border p-2 text-right">Val. Originale</th><th class="border p-2 text-right">Amort. Cédés</th><th class="border p-2 text-right">Prix de Vente</th><th class="border p-2 text-right">Plus/Moins Value</th></tr></thead>
+        <tbody>{% for acct, d in cerfa_data.items() %}{% if d.cess_val > 0 %}<tr><td class="border p-2"><a href="/cerfa/detail/{{ acct }}" class="text-blue-600 font-bold hover:underline">{{ acct }}</a></td><td class="border p-2 text-right">{{ "%.2f"|format(d.cess_val) }}</td><td class="border p-2 text-right">{{ "%.2f"|format(d.cess_amort) }}</td><td class="border p-2 text-right">{{ "%.2f"|format(d.cess_pv) }}</td><td class="border p-2 text-right">{{ "%.2f"|format(d.cess_pv_val) }}</td></tr>{% endif %}{% endfor %}</tbody>
+    </table>
+</div>
+{% endblock %}

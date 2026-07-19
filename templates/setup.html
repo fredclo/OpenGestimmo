@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white p-8 rounded shadow max-w-2xl mx-auto mt-10">
+    <h2 class="text-2xl font-bold mb-6 text-center">Gestion des Dossiers</h2>
+    <div class="grid grid-cols-2 gap-8">
+        <!-- Créer -->
+        <div class="border-r pr-8">
+            <h3 class="font-bold mb-4 text-lg">Créer un nouveau dossier</h3>
+            <form action="/dossier/create" method="POST" class="space-y-4">
+                <div><label>Nom de la société *</label><input type="text" name="name" class="border p-2 w-full" required></div>
+                <div><label>SIRET</label><input type="text" name="siret" class="border p-2 w-full"></div>
+                <div><label>Forme Juridique</label><input type="text" name="legal_form" class="border p-2 w-full"></div>
+                <div><label>Adresse</label><input type="text" name="address" class="border p-2 w-full"></div>
+                <div><label>Année du 1er exercice *</label><input type="number" name="first_year" value="2024" class="border p-2 w-full" required></div>
+                <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded w-full">Créer et ouvrir</button>
+            </form>
+        </div>
+        <!-- Ouvrir -->
+        <div>
+            <h3 class="font-bold mb-4 text-lg">Ouvrir un dossier existant</h3>
+            <p class="text-sm text-gray-600 mb-4">Sélectionnez un fichier de base de données (.db) sur votre disque.</p>
+            <form action="/dossier/open" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <div class="border-2 border-dashed border-gray-300 p-6 text-center rounded">
+                    <label for="open_file" class="cursor-pointer text-blue-600 font-medium">📄 Parcourir les fichiers...</label>
+                    <input type="file" id="open_file" name="file" accept=".db" class="hidden" onchange="document.getElementById('file_name').innerText = this.files[0].name">
+                    <p id="file_name" class="text-xs text-gray-500 mt-2">Aucun fichier sélectionné</p>
+                </div>
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded w-full" disabled id="open_btn">Ouvrir le dossier</button>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('open_file').addEventListener('change', function() {
+        document.getElementById('open_btn').removeAttribute('disabled');
+    });
+</script>
+{% endblock %}
