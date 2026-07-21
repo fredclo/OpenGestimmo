@@ -8,7 +8,7 @@ Logiciel open source de gestion des immobilisations avec les fonctions de base e
 - import/export
 - sauvegarde
   
-le principal y est !
+le principal y est ! (voir les photos écran dans le dossier screenshot)
 
 Cela remplace avantageusement un tableau excel ou une base manuelle pour un indépendant ou une TPE
 
