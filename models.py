@@ -16,7 +16,9 @@ class CompanyInfo(Base):
 class FiscalYear(Base):
     __tablename__ = 'fiscal_years'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    year = Column(Integer, nullable=False, unique=True)
+    year = Column(Integer)
+    start_date = Column(Date, nullable=True)
+    end_date = Column(Date, nullable=True)
     is_closed = Column(Boolean, default=False)
 
 class Account(Base):
@@ -34,6 +36,13 @@ class CostCenter(Base):
     __tablename__ = 'cost_centers'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False, unique=True)
+
+class DegressiveRule(Base):
+    __tablename__ = 'degressive_rules'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    min_duration = Column(Integer, nullable=False)
+    max_duration = Column(Integer, nullable=False)
+    coefficient = Column(Float, nullable=False)
 
 class Asset(Base):
     __tablename__ = 'assets'
@@ -54,6 +63,7 @@ class Asset(Base):
     is_amortizable = Column(Boolean, default=True)
     duration_accounting = Column(Integer, nullable=False, default=0)
     duration_fiscal = Column(Integer, nullable=False, default=0)
+    method_accounting = Column(String, default='linear') # NOUVEAU
     method_fiscal = Column(String, default='linear')
     status = Column(String, default='in_service')
     depreciation_entries = relationship("DepreciationEntry", back_populates="asset", cascade="all, delete-orphan")
@@ -62,7 +72,8 @@ class DepreciationEntry(Base):
     __tablename__ = 'depreciation_entries'
     id = Column(Integer, primary_key=True, autoincrement=True)
     asset_id = Column(String, ForeignKey('assets.id'), nullable=False)
-    fiscal_year = Column(Integer, nullable=False)
+    fiscal_year = Column(Integer, nullable=True)
+    fy_start_date = Column(Date, nullable=True)
     economic_depreciation = Column(Float, default=0.0)
     fiscal_depreciation = Column(Float, default=0.0)
     derogatory_depreciation = Column(Float, default=0.0)

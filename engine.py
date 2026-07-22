@@ -1,128 +1,171 @@
-from models import Asset, DepreciationEntry, AccountingEntry
+from models import Asset, DepreciationEntry, AccountingEntry, FiscalYear, DegressiveRule
 from sqlalchemy.orm import Session
-from datetime import date
+from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
 
-def get_degressive_rate(duration: int) -> float:
-    if 3 <= duration <= 4: return 1.25
-    elif 5 <= duration <= 6: return 1.75
-    elif duration > 6: return 2.25
+def get_degressive_rate(duration: int, rules: list) -> float:
+    for r in rules:
+        if r.min_duration <= duration <= r.max_duration:
+            return r.coefficient
     return 1.0
 
-def calculate_linear(base: float, duration: int, service_date: date, calc_year: int, disposal_date: date = None) -> float:
-    if duration <= 0: return 0.0
-    annual = base / duration
-    start_year = service_date.year
-    if calc_year < start_year or calc_year > start_year + duration: return 0.0
-    if calc_year == start_year:
-        months = 12 - (service_date.month - 1)
-        annuity = annual * (months / 12)
-    elif calc_year == start_year + duration:
-        months = service_date.month - 1
-        annuity = annual * (months / 12)
-    else:
-        annuity = annual
-    if disposal_date and calc_year == disposal_date.year:
-        months = disposal_date.month
-        annuity = annual * (months / 12)
-    return round(annuity, 2)
+def months_between(d1, d2):
+    if d1 > d2: return 0
+    return (d2.year - d1.year) * 12 + (d2.month - d1.month) + 1
 
-def calculate_degressive(base: float, duration: int, service_date: date, calc_year: int, disposal_date: date = None) -> float:
-    if duration <= 0: return 0.0
-    rate = get_degressive_rate(duration) / duration
-    current_book_value = base
-    start_year = service_date.year
-    for y in range(start_year, calc_year + 1):
-        if y == start_year:
-            months = 12 - (service_date.month - 1)
-            annuity = current_book_value * rate * (months / 12)
-        else:
-            remaining_years = duration - (y - start_year)
-            if remaining_years <= 0: return 0.0
-            linear_rate = 1 / remaining_years
-            if linear_rate > rate: annuity = current_book_value * linear_rate
-            else: annuity = current_book_value * rate
-        
-        if disposal_date and y == disposal_date.year:
-            months = disposal_date.month
-            full_year_annuity = current_book_value * rate
-            annuity = full_year_annuity * (months / 12)
-            return round(annuity, 2)
-            
-        if y == calc_year: return round(annuity, 2)
-        current_book_value -= annuity
-        if current_book_value < 0: current_book_value = 0
-    return 0.0
-
-def generate_plan(asset: Asset, db: Session, target_year: int):
-    db.query(DepreciationEntry).filter(DepreciationEntry.asset_id == asset.id).delete(synchronize_session=False)
+def build_periods(asset: Asset, all_fys: list, rules: list):
+    if not asset.is_amortizable: return []
+    base = asset.acquisition_value - (asset.residual_value if asset.residual_value else 0.0)
+    dur_acc = asset.duration_accounting
+    dur_fisc = asset.duration_fiscal if asset.duration_fiscal > 0 else dur_acc
+    if base <= 0 or dur_acc <= 0: return []
     
-    # Si non amortissable, on ne génère aucun plan
+    periods = []
+    
+    # 1. Périodes réelles
+    for fy in all_fys:
+        if not fy.start_date or not fy.end_date: continue
+        if fy.end_date < asset.service_date: continue
+        # NOUVEAU : Arrêter la lecture des exercices si on a dépassé la date de cession
+        if asset.disposal_date and fy.start_date > asset.disposal_date: continue
+        
+        p_start = max(fy.start_date, asset.service_date)
+        p_end = fy.end_date
+        if asset.disposal_date and p_start <= asset.disposal_date:
+            p_end = min(p_end, asset.disposal_date)
+        if p_start <= p_end:
+            periods.append({'start': p_start, 'end': p_end})
+            
+    # 2. Prolongation théorique
+    last_end = periods[-1]['end'] if periods else date(asset.service_date.year, asset.service_date.month, 1) - timedelta(days=1)
+    total_months_acc = dur_acc * 12
+    total_months_fisc = dur_fisc * 12
+    max_end_date = asset.service_date + relativedelta(months=max(total_months_acc, total_months_fisc))
+    
+    # NOUVEAU : Si cession, la fin de vie théorique est la date de cession
+    if asset.disposal_date:
+        max_end_date = min(max_end_date, asset.disposal_date)
+    
+    while last_end < max_end_date:
+        p_start = last_end + timedelta(days=1)
+        p_end = p_start + relativedelta(years=1) - timedelta(days=1)
+        if asset.disposal_date and p_start <= asset.disposal_date:
+            p_end = min(p_end, asset.disposal_date)
+        if p_start <= p_end:
+            periods.append({'start': p_start, 'end': p_end})
+        last_end = p_end
+
+    # 3. Calcul des dotations avec prorata strict sur les mois restants
+    timeline = []
+    curr_nbv_econ = base
+    curr_nbv_fisc = base
+    months_elapsed_econ = 0
+    months_elapsed_fisc = 0
+    
+    for p in periods:
+        nb_months = months_between(p['start'], p['end'])
+        
+        # ÉCONOMIQUE
+        econ = 0
+        months_left_econ = total_months_acc - months_elapsed_econ
+        if months_left_econ > 0:
+            actual_months_econ = min(nb_months, months_left_econ)
+            if asset.method_accounting == 'linear':
+                econ = (base / total_months_acc) * actual_months_econ
+            else:
+                rate = get_degressive_rate(dur_acc, rules) / dur_acc
+                remaining_years = months_left_econ / 12.0
+                if remaining_years > 0:
+                    lin_rate = 1.0 / remaining_years
+                    actual_rate = max(rate, lin_rate)
+                    econ = (curr_nbv_econ * actual_rate) * (actual_months_econ / 12.0)
+        econ = min(econ, curr_nbv_econ)
+        
+        # FISCAL
+        fisc = 0
+        months_left_fisc = total_months_fisc - months_elapsed_fisc
+        if months_left_fisc > 0:
+            actual_months_fisc = min(nb_months, months_left_fisc)
+            if asset.method_fiscal == 'linear':
+                fisc = (base / total_months_fisc) * actual_months_fisc
+            else: 
+                rate = get_degressive_rate(dur_fisc, rules) / dur_fisc
+                remaining_years = months_left_fisc / 12.0
+                if remaining_years > 0:
+                    lin_rate = 1.0 / remaining_years
+                    actual_rate = max(rate, lin_rate)
+                    fisc = (curr_nbv_fisc * actual_rate) * (actual_months_fisc / 12.0)
+        fisc = min(fisc, curr_nbv_fisc)
+        
+        curr_nbv_econ -= econ
+        if curr_nbv_econ < 0.01: curr_nbv_econ = 0
+        curr_nbv_fisc -= fisc
+        if curr_nbv_fisc < 0.01: curr_nbv_fisc = 0
+        
+        months_elapsed_econ += actual_months_econ if months_left_econ > 0 else 0
+        months_elapsed_fisc += actual_months_fisc if months_left_fisc > 0 else 0
+        
+        timeline.append({'start': p['start'], 'end': p['end'], 'econ': econ, 'fisc': fisc})
+        
+    return timeline
+
+def generate_plan(asset: Asset, db: Session, all_fys: list, rules: list):
+    db.query(DepreciationEntry).filter(DepreciationEntry.asset_id == asset.id).delete(synchronize_session=False)
     if not asset.is_amortizable:
         db.commit()
         return
-    
-    residual = asset.residual_value if asset.residual_value else 0.0
-    base = asset.acquisition_value - residual
-    if base < 0: base = 0
-    
+        
+    timeline = build_periods(asset, all_fys, rules)
+    if not timeline:
+        db.commit()
+        return
+        
     cumul_econ = 0.0
     cumul_fisc = 0.0
-    end_year = asset.service_date.year + asset.duration_accounting
-    if asset.disposal_date: end_year = asset.disposal_date.year
-
-    for year in range(asset.service_date.year, end_year + 1):
-        econ = calculate_linear(base, asset.duration_accounting, asset.service_date, year, asset.disposal_date)
-        if asset.method_fiscal == 'degressive':
-            fisc = calculate_degressive(base, asset.duration_fiscal, asset.service_date, year, asset.disposal_date)
-        else:
-            fisc = calculate_linear(base, asset.duration_fiscal, asset.service_date, year, asset.disposal_date)
+    
+    for fy in all_fys:
+        if not fy.start_date or not fy.end_date: continue
+        if fy.end_date < asset.service_date: continue
+        # NOUVEAU : Arrêter d'enregistrer en base si on a dépassé la cession
+        if asset.disposal_date and fy.start_date > asset.disposal_date: continue
         
-        derog = round(fisc - econ, 2)
+        econ = 0.0
+        fisc = 0.0
+        for p_data in timeline:
+            if p_data['start'] == max(fy.start_date, asset.service_date) and p_data['end'] <= fy.end_date:
+                econ += p_data['econ']
+                fisc += p_data['fisc']
+                
         cumul_econ += econ
         cumul_fisc += fisc
         
+        econ_r = round(econ, 2)
+        fisc_r = round(fisc, 2)
+        derog = round(fisc_r - econ_r, 2)
+        
         db.add(DepreciationEntry(
-            asset_id=asset.id, fiscal_year=year,
-            economic_depreciation=econ, fiscal_depreciation=fisc, derogatory_depreciation=derog,
+            asset_id=asset.id, fy_start_date=fy.start_date, fiscal_year=fy.start_date.year,
+            economic_depreciation=econ_r, fiscal_depreciation=fisc_r, derogatory_depreciation=derog,
             cumulative_economic=round(cumul_econ, 2), cumulative_fiscal=round(cumul_fisc, 2)
         ))
     db.commit()
 
-def generate_accounting_entries(db: Session, fiscal_year: int):
-    db.query(AccountingEntry).filter(AccountingEntry.date.like(f"{fiscal_year}-%")).delete()
+def generate_accounting_entries(db: Session, fy: FiscalYear):
+    db.query(AccountingEntry).filter(AccountingEntry.date >= fy.start_date, AccountingEntry.date <= fy.end_date).delete()
     assets = db.query(Asset).all()
     for asset in assets:
-        if not asset.is_amortizable: continue # Ignore si non amortissable
-        
-        plan = db.query(DepreciationEntry).filter(
-            DepreciationEntry.asset_id == asset.id, DepreciationEntry.fiscal_year == fiscal_year
-        ).first()
+        if not asset.is_amortizable: continue
+        plan = db.query(DepreciationEntry).filter(DepreciationEntry.asset_id == asset.id, DepreciationEntry.fy_start_date == fy.start_date).first()
         if not plan: continue
         
         if plan.economic_depreciation > 0:
-            db.add(AccountingEntry(
-                date=date(fiscal_year, 12, 31), account_debit="6811", account_credit="28" + asset.account_number[1:],
-                label=f"Dot. Econ. {asset.name}", amount=plan.economic_depreciation, asset_id=asset.id
-            ))
-            
+            db.add(AccountingEntry(date=fy.end_date, account_debit="6811", account_credit="28" + asset.account_number[1:], label=f"Dot. Econ. {asset.name}", amount=plan.economic_depreciation, asset_id=asset.id))
         if plan.derogatory_depreciation > 0:
-            db.add(AccountingEntry(
-                date=date(fiscal_year, 12, 31), account_debit="68725", account_credit="145",
-                label=f"Dot. Derog. {asset.name}", amount=plan.derogatory_depreciation, asset_id=asset.id
-            ))
+            db.add(AccountingEntry(date=fy.end_date, account_debit="68725", account_credit="145", label=f"Dot. Derog. {asset.name}", amount=plan.derogatory_depreciation, asset_id=asset.id))
         elif plan.derogatory_depreciation < 0:
-            db.add(AccountingEntry(
-                date=date(fiscal_year, 12, 31), account_debit="145", account_credit="78725",
-                label=f"Reprise Derog. {asset.name}", amount=abs(plan.derogatory_depreciation), asset_id=asset.id
-            ))
+            db.add(AccountingEntry(date=fy.end_date, account_debit="145", account_credit="78725", label=f"Reprise Derog. {asset.name}", amount=abs(plan.derogatory_depreciation), asset_id=asset.id))
         
-        if asset.disposal_date and asset.disposal_date.year == fiscal_year:
-            db.add(AccountingEntry(
-                date=asset.disposal_date, account_debit="28" + asset.account_number[1:], account_credit="775",
-                label=f"Reprise Amort. {asset.name}", amount=plan.cumulative_economic, asset_id=asset.id
-            ))
-            db.add(AccountingEntry(
-                date=asset.disposal_date, account_debit="675", account_credit=asset.account_number,
-                label=f"Sortie {asset.name}", amount=asset.acquisition_value, asset_id=asset.id
-            ))
+        if asset.disposal_date and fy.start_date <= asset.disposal_date <= fy.end_date:
+            db.add(AccountingEntry(date=asset.disposal_date, account_debit="28" + asset.account_number[1:], account_credit="775", label=f"Reprise Amort. {asset.name}", amount=plan.cumulative_economic, asset_id=asset.id))
+            db.add(AccountingEntry(date=asset.disposal_date, account_debit="675", account_credit=asset.account_number, label=f"Sortie {asset.name}", amount=asset.acquisition_value, asset_id=asset.id))
     db.commit()
