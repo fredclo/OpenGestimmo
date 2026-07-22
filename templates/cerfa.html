@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="flex justify-between items-center mb-6 no-print">
-    <h1 class="text-3xl font-bold">États CERFA 2054 / 2055 ({{ year }})</h1>
+    <h1 class="text-3xl font-bold">États CERFA 2054 / 2055 ({{ current_fy.start_date.strftime('%Y') }})</h1>
 </div>
 <div class="bg-white p-8 rounded shadow print-area">
     <h2 class="text-center text-xl font-bold mb-4">TABLEAU N° 2054 : IMMOBILISATIONS</h2>

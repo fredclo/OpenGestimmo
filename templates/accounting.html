@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold">Écritures Comptables ({{ year }})</h1>
+    <h1 class="text-3xl font-bold">Écritures Comptables ({{ current_fy.start_date.strftime('%d/%m/%Y') }} au {{ current_fy.end_date.strftime('%d/%m/%Y') }})</h1>
     <form action="/accounting/generate" method="POST"><button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded">Générer écritures</button></form>
 </div>
 <div class="bg-white p-6 rounded shadow overflow-x-auto">

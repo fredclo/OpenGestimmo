@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Catégories / Familles</h1>
+    <a href="/settings" class="bg-gray-400 text-white px-4 py-2 rounded">Retour aux Paramètres</a>
+</div>
+<div class="bg-white p-6 rounded shadow">
+    <h3 class="font-bold mb-4">Ajouter une catégorie</h3>
+    <form action="/categories/add" method="POST" class="flex gap-2 mb-6">
+        <input type="text" name="name" placeholder="Nom de la catégorie" class="border p-2 rounded flex-1" required>
+        <button class="bg-blue-600 text-white px-4 py-2 rounded">Ajouter</button>
+    </form>
+    <ul class="text-sm space-y-2">
+        {% for c in categories %}
+        <li class="flex items-center gap-2 pb-2 border-b">
+            <form action="/categories/edit/{{ c.id }}" method="POST" class="flex-1 flex gap-2">
+                <input type="text" name="name" value="{{ c.name }}" class="border p-1 rounded text-sm flex-1 bg-gray-100 text-gray-500" readonly id="in-cat-{{ c.id }}">
+                <button type="button" onclick="enableEdit('cat-{{ c.id }}')" id="edit-cat-{{ c.id }}" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs">✎</button>
+                <button type="submit" id="ok-cat-{{ c.id }}" class="bg-green-600 text-white px-3 py-1 rounded text-xs hidden">OK</button>
+            </form>
+            <a href="/categories/delete/{{ c.id }}" class="text-red-500 text-xs" onclick="return confirm('Supprimer ?')">X</a>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+<script>
+    function enableEdit(id) {
+        const input = document.getElementById('in-' + id);
+        const editBtn = document.getElementById('edit-' + id);
+        const okBtn = document.getElementById('ok-' + id);
+        input.removeAttribute('readonly');
+        input.classList.remove('bg-gray-100', 'text-gray-500');
+        input.classList.add('bg-white', 'text-black');
+        input.focus();
+        editBtn.classList.add('hidden');
+        okBtn.classList.remove('hidden');
+    }
+</script>
+{% endblock %}

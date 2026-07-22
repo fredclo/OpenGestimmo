@@ -11,7 +11,10 @@
                 <div><label>SIRET</label><input type="text" name="siret" class="border p-2 w-full"></div>
                 <div><label>Forme Juridique</label><input type="text" name="legal_form" class="border p-2 w-full"></div>
                 <div><label>Adresse</label><input type="text" name="address" class="border p-2 w-full"></div>
-                <div><label>Année du 1er exercice *</label><input type="number" name="first_year" value="2024" class="border p-2 w-full" required></div>
+                <div class="flex gap-2">
+                    <div class="flex-1"><label>Début 1er exercice</label><input type="date" name="start_date" class="border p-2 w-full" required></div>
+                    <div class="flex-1"><label>Fin 1er exercice</label><input type="date" name="end_date" class="border p-2 w-full" required></div>
+                </div>
                 <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded w-full">Créer et ouvrir</button>
             </form>
         </div>

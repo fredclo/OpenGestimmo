@@ -16,7 +16,7 @@
         <ul class="mb-4 text-sm space-y-1">
             {% for y in years %}
             <li class="flex justify-between items-center">
-                <span>{{ y.year }} 
+                <span>{{ y.start_date.strftime('%d/%m/%Y') }} au {{ y.end_date.strftime('%d/%m/%Y') }} 
                     {% if y.is_closed %}<span class="text-red-500 font-bold">(Clôturé)</span>
                     {% elif current_fy and y.id == current_fy.id %}<span class="text-blue-500 font-bold">(En cours)</span>
                     {% else %}<span class="text-green-500">(Ouvert)</span>{% endif %}
@@ -33,7 +33,11 @@
             </li>
             {% endfor %}
         </ul>
-        <form action="/settings/year/add" method="POST" class="flex gap-2 no-print"><input type="number" name="year" placeholder="2025" class="border p-2 rounded w-full"><button class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Ajouter</button></form>
+        <form action="/settings/year/add" method="POST" class="flex gap-2 no-print">
+            <input type="date" name="start_date" value="{{ next_fy_start }}" class="border p-2 rounded text-sm" required title="Début">
+            <input type="date" name="end_date" value="{{ next_fy_end }}" class="border p-2 rounded text-sm" required title="Fin">
+            <button class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Ajouter</button>
+        </form>
     </div>
 </div>
 
@@ -49,55 +53,22 @@
     </div>
 </div>
 
-<div class="grid grid-cols-3 gap-6 mb-6">
+<div class="grid grid-cols-2 gap-6 mb-6">
     <div class="bg-white p-6 rounded shadow flex flex-col justify-center">
         <h3 class="font-bold mb-4">Plan Comptable (PCG)</h3>
         <a href="/pcg" class="bg-blue-600 text-white px-4 py-2 rounded text-sm text-center font-bold">Accéder au PCG</a>
     </div>
-    <div class="bg-white p-6 rounded shadow">
-        <h3 class="font-bold mb-4">Catégories</h3>
-        <ul class="mb-4 text-sm space-y-2">
-            {% for c in categories %}
-            <li class="flex items-center gap-2">
-                <form action="/settings/category/edit/{{ c.id }}" method="POST" class="flex-1 flex gap-2">
-                    <input type="text" name="name" value="{{ c.name }}" class="border p-1 rounded text-sm flex-1 bg-gray-100 text-gray-500" readonly id="in-cat-{{ c.id }}">
-                    <button type="button" onclick="enableEdit('cat-{{ c.id }}')" id="edit-cat-{{ c.id }}" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs">✎</button>
-                    <button type="submit" id="ok-cat-{{ c.id }}" class="bg-green-600 text-white px-3 py-1 rounded text-xs hidden">OK</button>
-                </form>
-                <a href="/settings/category/delete/{{ c.id }}" class="text-red-500 text-xs" onclick="return confirm('Supprimer ?')">X</a>
-            </li>
-            {% endfor %}
-        </ul>
-        <form action="/settings/category/add" method="POST" class="flex gap-2"><input type="text" name="name" placeholder="Nom" class="border p-2 rounded w-full"><button class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Ajouter</button></form>
+    <div class="bg-white p-6 rounded shadow flex flex-col justify-center">
+        <h3 class="font-bold mb-4">Coefficients Dégressifs</h3>
+        <a href="/degressive" class="bg-blue-600 text-white px-4 py-2 rounded text-sm text-center font-bold">Accéder aux Coefficients</a>
     </div>
-    <div class="bg-white p-6 rounded shadow">
+    <div class="bg-white p-6 rounded shadow flex flex-col justify-center">
+        <h3 class="font-bold mb-4">Catégories / Familles</h3>
+        <a href="/categories" class="bg-blue-600 text-white px-4 py-2 rounded text-sm text-center font-bold">Gérer les Catégories</a>
+    </div>
+    <div class="bg-white p-6 rounded shadow flex flex-col justify-center">
         <h3 class="font-bold mb-4">Centres de Coût (CDC)</h3>
-        <ul class="mb-4 text-sm space-y-2">
-            {% for c in cdc %}
-            <li class="flex items-center gap-2">
-                <form action="/settings/cdc/edit/{{ c.id }}" method="POST" class="flex-1 flex gap-2">
-                    <input type="text" name="name" value="{{ c.name }}" class="border p-1 rounded text-sm flex-1 bg-gray-100 text-gray-500" readonly id="in-cdc-{{ c.id }}">
-                    <button type="button" onclick="enableEdit('cdc-{{ c.id }}')" id="edit-cdc-{{ c.id }}" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs">✎</button>
-                    <button type="submit" id="ok-cdc-{{ c.id }}" class="bg-green-600 text-white px-3 py-1 rounded text-xs hidden">OK</button>
-                </form>
-                <a href="/settings/cdc/delete/{{ c.id }}" class="text-red-500 text-xs" onclick="return confirm('Supprimer ?')">X</a>
-            </li>
-            {% endfor %}
-        </ul>
-        <form action="/settings/cdc/add" method="POST" class="flex gap-2"><input type="text" name="name" placeholder="Nom" class="border p-2 rounded w-full"><button class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Ajouter</button></form>
+        <a href="/cdc" class="bg-blue-600 text-white px-4 py-2 rounded text-sm text-center font-bold">Gérer les CDC</a>
     </div>
 </div>
-<script>
-    function enableEdit(id) {
-        const input = document.getElementById('in-' + id);
-        const editBtn = document.getElementById('edit-' + id);
-        const okBtn = document.getElementById('ok-' + id);
-        input.removeAttribute('readonly');
-        input.classList.remove('bg-gray-100', 'text-gray-500');
-        input.classList.add('bg-white', 'text-black');
-        input.focus();
-        editBtn.classList.add('hidden');
-        okBtn.classList.remove('hidden');
-    }
-</script>
 {% endblock %}

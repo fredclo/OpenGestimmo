@@ -1,18 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="text-3xl font-bold mb-6">Tableau de bord - Exercice {{ current_year }}</h1>
+<h1 class="text-3xl font-bold mb-6">Tableau de bord</h1>
 <div class="grid grid-cols-3 gap-6 mb-8">
     <div class="bg-white p-6 rounded shadow text-center"><h3 class="text-gray-500 uppercase text-xs">Immobilisations actives</h3><p class="text-3xl font-bold mt-2">{{ assets|length }}</p></div>
     <div class="bg-white p-6 rounded shadow text-center"><h3 class="text-gray-500 uppercase text-xs">Valeur brute totale</h3><p class="text-3xl font-bold mt-2">{{ "%.2f"|format(total_value) }} €</p></div>
-    <div class="bg-white p-6 rounded shadow text-center"><h3 class="text-gray-500 uppercase text-xs">Exercice en cours</h3><p class="text-3xl font-bold mt-2">{{ current_year }}</p></div>
+    <div class="bg-white p-6 rounded shadow text-center"><h3 class="text-gray-500 uppercase text-xs">Exercice en cours</h3><p class="text-xl font-bold mt-2">{{ current_fy.start_date.strftime('%d/%m/%Y') }}<br>{{ current_fy.end_date.strftime('%d/%m/%Y') }}</p></div>
 </div>
 <div class="bg-white p-6 rounded shadow">
     <h2 class="text-xl font-bold mb-4">Dernières immobilisations</h2>
     <table class="w-full text-sm">
         <thead><tr class="border-b text-left text-gray-500"><th class="py-2">ID</th><th>Libellé</th><th>Compte</th><th>Valeur</th></tr></thead>
-        <tbody>
-            {% for a in assets[:5] %}<tr class="border-b"><td class="py-2">{{ a.id }}</td><td>{{ a.name }}</td><td>{{ a.account_number }}</td><td>{{ a.acquisition_value }} €</td></tr>{% endfor %}
-        </tbody>
+        <tbody>{% for a in assets[:5] %}<tr class="border-b"><td class="py-2">{{ a.id }}</td><td>{{ a.name }}</td><td>{{ a.account_number }}</td><td>{{ a.acquisition_value }} €</td></tr>{% endfor %}</tbody>
     </table>
 </div>
 {% endblock %}

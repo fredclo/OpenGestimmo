@@ -39,12 +39,19 @@
             </label>
         </div>
         
-        <div class="col-span-2"><label>Méthode Fiscale *</label>
+        <div><label>Méthode Économique *</label>
+            <select name="method_accounting" class="border p-2 w-full">
+                <option value="linear" {% if asset and asset.method_accounting == 'linear' %}selected{% endif %}>Linéaire</option>
+                <option value="degressive" {% if asset and asset.method_accounting == 'degressive' %}selected{% endif %}>Dégressif</option>
+            </select>
+        </div>
+        <div><label>Méthode Fiscale *</label>
             <select name="method_fiscal" class="border p-2 w-full">
                 <option value="linear" {% if asset and asset.method_fiscal == 'linear' %}selected{% endif %}>Linéaire</option>
                 <option value="degressive" {% if asset and asset.method_fiscal == 'degressive' %}selected{% endif %}>Dégressif</option>
             </select>
         </div>
+        
         <div class="col-span-2 mt-4">
             <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">Enregistrer</button>
             <a href="/assets" class="bg-gray-400 text-white px-6 py-2 rounded ml-2">Annuler</a>
