@@ -1,6 +1,6 @@
 # Open Gestimmo
 
-Logiciel open source de gestion des immobilisations avec les fonctions de base et même plus :
+Logiciel web de gestion des immobilisations et des amortissements avec les fonctions de base et même plus :
 - calcul des amortissements (linéaire, dégressif et dérogatoire)
 - génération des écritures comptables et de leur export
 - états fiscaux (CERFA 2054/2055)
@@ -26,3 +26,4 @@ Cela remplace avantageusement un tableau excel ou une base manuelle pour un ind�
 ## Utilisation
 - Ouvrez votre navigateur web à l'adresse : `http://127.0.0.1:8000`
 - Le menu de gauche permet de naviguer entre les Immobilisations, la Comptabilité et les Paramètres.
+- Le menu en haut à droite permet de gérer les dossiers
